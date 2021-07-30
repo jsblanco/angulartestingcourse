@@ -1,14 +1,14 @@
-import { async, ComponentFixture, fakeAsync, flush, TestBed, waitForAsync } from '@angular/core/testing';
-import { CoursesModule } from '../courses.module';
 import { DebugElement } from '@angular/core';
+import { ComponentFixture, fakeAsync, flush, TestBed, waitForAsync } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { of } from 'rxjs';
+import { setupCourses } from '../common/setup-test-data';
+import { click } from '../common/test-utils';
+import { CoursesModule } from '../courses.module';
+import { CoursesService } from '../services/courses.service';
 
 import { HomeComponent } from './home.component';
-import { CoursesService } from '../services/courses.service';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { setupCourses } from '../common/setup-test-data';
-import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
-import { click } from '../common/test-utils';
 
 
 describe('HomeComponent', () => {
@@ -17,7 +17,7 @@ describe('HomeComponent', () => {
   let component: HomeComponent;
   let element: DebugElement;
   let coursesService: any;
-  const begginerCourses = setupCourses().filter(course => course.category === 'BEGINNER');
+  const beginnerCourses = setupCourses().filter(course => course.category === 'BEGINNER');
   const advancedCourses = setupCourses().filter(course => course.category === 'ADVANCED');
 
   beforeEach(waitForAsync(() => {
@@ -51,7 +51,7 @@ describe('HomeComponent', () => {
 
 
   it('should display only beginner courses', () => {
-    coursesService.findAllCourses.and.returnValue(of(begginerCourses));
+    coursesService.findAllCourses.and.returnValue(of(beginnerCourses));
     fixture.detectChanges();
     const tabs = element.queryAll(By.css('.mat-tab-label'));
     expect(tabs.length).toBe(1, ' Only beginner courses tab should be displayed');
@@ -73,18 +73,35 @@ describe('HomeComponent', () => {
     expect(tabs.length).toBe(2, ' Both courses tabs should be displayed');
   });
 
-  it('should display advanced courses when tab clicked', fakeAsync(() => {
+  it('should display advanced courses when tab clicked', fakeAsync((/*done: DoneFn*/) => {
     coursesService.findAllCourses.and.returnValue(of(setupCourses()));
     fixture.detectChanges();
     const tabs = element.queryAll(By.css('.mat-tab-label'));
     click(tabs[1]);
     fixture.detectChanges();
+    // setTimeout(() => {
+    //   const cardTitles = element.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
+    //   expect(cardTitles.length).toBeGreaterThan(0, 'Could not find any card titles');
+    //   expect(cardTitles[0].nativeElement.textContent).toContain('Angular Security Course');
+    //   done();
+    // }, 500);
     flush();
-      const cardTitles = element.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
-      expect(cardTitles.length).toBeGreaterThan(0, 'Could not find any card titles');
-      expect(cardTitles[0].nativeElement.textContent).toContain('Angular Security Course');
+    const cardTitles = element.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
+    expect(cardTitles.length).toBeGreaterThan(0, 'Could not find any card titles');
+    expect(cardTitles[0].nativeElement.textContent).toContain('Angular Security Course');
   }));
 
+  it('should display advanced courses when tab clicked - Async version', waitForAsync(() => {
+    coursesService.findAllCourses.and.returnValue(of(setupCourses()));
+    fixture.detectChanges();
+    const tabs = element.queryAll(By.css('.mat-tab-label'));
+    click(tabs[1]);
+    fixture.detectChanges();
+    fixture.whenStable()
+      .then(() => {
+        const cardTitles = element.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
+        expect(cardTitles.length).toBeGreaterThan(0, 'Could not find any card titles');
+        expect(cardTitles[0].nativeElement.textContent).toContain('Angular Security Course');
+      });
+  }));
 });
-
-
